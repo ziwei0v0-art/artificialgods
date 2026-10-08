@@ -1,0 +1,34 @@
+{
+  "repository": "https://github.com/pyd021226/fly-paradise",
+  "commit": "9c6130681c1a112c3c7faaafbad6d335cc0a1c36",
+  "tag": "v0.3.6",
+  "retrieved": "2026-10-03",
+  "source_files_unmodified": true,
+  "source_files_read_only": true,
+  "package_license": "MIT",
+  "package_author": "desktop-fly-pet",
+  "upstream_license_or_notice_paths": [],
+  "files": [
+    {
+      "path": "upstream/renderer/overlay.js",
+      "url": "https://raw.githubusercontent.com/pyd021226/fly-paradise/9c6130681c1a112c3c7faaafbad6d335cc0a1c36/renderer/overlay.js",
+      "bytes": 111980,
+      "sha256": "dcfe5153feff4b5bfd47ad5fdde63cf5da337cbf286bb41ba0cb0562c7f2ac95",
+      "git_blob_sha1": "cec334fa8bd91ec7a96d0c0eb8f9d21d417f14dd"
+    },
+    {
+      "path": "upstream/package.json",
+      "url": "https://raw.githubusercontent.com/pyd021226/fly-paradise/9c6130681c1a112c3c7faaafbad6d335cc0a1c36/package.json",
+      "bytes": 1660,
+      "sha256": "99634dbddf6eb98a05e43d11d05b4a9736a2db6a11fea087fc318f82d5e8df6d",
+      "git_blob_sha1": "0cdf21b371b3e85071395ea76e8afc899581ba9f"
+    },
+    {
+      "path": "upstream/README.md",
+      "url": "https://raw.githubusercontent.com/pyd021226/fly-paradise/9c6130681c1a112c3c7faaafbad6d335cc0a1c36/README.md",
+      "bytes": 709,
+      "sha256": "46500972bdee50df16b74952320d1ed14fa9f27d8a4f4ceaeefd71395b6f6804",
+      "git_blob_sha1": "beedd817f87677da156ba84dc3b303289363f56a"
+    }
+  ]
+}

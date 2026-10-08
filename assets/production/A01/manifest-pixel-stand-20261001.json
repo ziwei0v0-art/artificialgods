@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "sampling": "nearest",
+  "stand": {
+    "file": "stand-pixel-20261001.png",
+    "facing": "right",
+    "sourceRect": [
+      318,
+      356,
+      489,
+      978
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "product": "灶神",
+  "file": "kanli-fluff-yellow-v02.png",
+  "sha256": "28b4df7c6319f32b7ca54f527bf581f4137cd538051f5419adb44a4c4cb03250",
+  "pixelSize": [
+    1254,
+    1254
+  ],
+  "provenance": "generation-v02.json",
+  "provenance_sha256": "94dcf0bc882654cf0770f84dd1a8a83d960f7afeed768312ab0e6b0804b9fc52",
+  "prompt": "generation-v02-prompt.txt",
+  "prompt_sha256": "b2c2e3a903580c256a7123b07c279412aafac0faac24679e2f6504382240bb6f"
+}

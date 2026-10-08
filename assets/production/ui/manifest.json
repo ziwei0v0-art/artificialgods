@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "sampling": "nearest",
+  "assets": {
+    "divination-vessel": {
+      "file": "divination-vessel-v01.png",
+      "sha256": "6f312703ea0dae3d4049bbdd8fb7d26c7c8c2eaf81e2bf6695ab3e25016b768d",
+      "sourceRect": [
+        208,
+        111,
+        613,
+        1296
+      ]
+    },
+    "timer-dial": {
+      "file": "timer-dial-v01.png",
+      "sha256": "16f9804956b51998c70a5beec0462f272bcbef7b92319d979303ef652f75abe9",
+      "sourceRect": [
+        104,
+        73,
+        946,
+        1197
+      ]
+    }
+  }
+}

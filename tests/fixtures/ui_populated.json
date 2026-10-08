@@ -1,0 +1,24 @@
+{
+  "_fixture_note": "离屏界面样例；数量、铜钱和日期均为构造值，不代表实际库存或发现记录。",
+  "coins": 24,
+  "bottle": [
+    {"color":"普通褐色","female":12,"male":8,"price":1},
+    {"color":"中褐色","female":3,"male":4,"price":2},
+    {"color":"深褐色","female":2,"male":1,"price":3},
+    {"color":"白色","female":1,"male":0,"price":8}
+  ],
+  "auto_paused": true,
+  "shop": [
+    {"id":"offering_plate","name":"素色供盘","price":12,"slot":"plate","owned":true,"placed":true},
+    {"id":"incense_burner","name":"陶香炉","price":24,"slot":"incense","owned":true,"placed":false},
+    {"id":"bell","name":"小铜铃","price":60,"slot":"bell","owned":false,"placed":false},
+    {"id":"shrine_g1","name":"神龛整修","price":120,"slot":"shrine","owned":false,"placed":false},
+    {"id":"shrine_g2","name":"彩绘与局部贴金","price":360,"slot":"shrine","owned":false,"placed":false}
+  ],
+  "discoveries": [
+    {"color":"普通褐色","found":true,"date":"2026-09-24","description":"常见的褐色，是抓放选育的起点。"},
+    {"color":"中褐色","found":true,"date":"2026-09-27","description":"温暖的中褐色，可放回雌雄个体参与繁殖。"},
+    {"color":"深褐色","found":true,"date":null,"description":"深色体表，与另外三种体色属于同一物种。"},
+    {"color":"白色","found":false,"date":null,"description":"浅白体表；出售或放回不会清除发现记录。"}
+  ]
+}

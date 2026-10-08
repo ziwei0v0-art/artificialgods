@@ -1,0 +1,87 @@
+[
+  {
+    "path": "base/LICENSE",
+    "sha256": "6f50364d313cd4f7df4c5371edce7c9890fc9852b73ddcc15fc3338beab91f08",
+    "commit": "f455f7c3b903ee98d2b9c0c5119c5d508c623f95"
+  },
+  {
+    "path": "base/README.md",
+    "sha256": "c7315e627c4fdb1e2dad514fcca63c2a315258870a918416b451d26a60951bf5",
+    "commit": "f455f7c3b903ee98d2b9c0c5119c5d508c623f95"
+  },
+  {
+    "path": "base/src/ui/dial/dial_input.c",
+    "sha256": "956581e17d6837618bbd7a8d18f858c46d6dbb0f7e4204075d5d9ded52121301",
+    "commit": "f455f7c3b903ee98d2b9c0c5119c5d508c623f95"
+  },
+  {
+    "path": "base/src/ui/dial/dial_window.c",
+    "sha256": "ebbfb849299a1399775e0a80d39a1d0b253201f74ec5b1013b654f9321679800",
+    "commit": "f455f7c3b903ee98d2b9c0c5119c5d508c623f95"
+  },
+  {
+    "path": "upstream/LICENSE",
+    "sha256": "6f50364d313cd4f7df4c5371edce7c9890fc9852b73ddcc15fc3338beab91f08",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/README.md",
+    "sha256": "c7315e627c4fdb1e2dad514fcca63c2a315258870a918416b451d26a60951bf5",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_covers.c",
+    "sha256": "c551c6f3e970e41bb07d2aa95f091269ab17898741f1177d57cac320b1e23f80",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_draw.c",
+    "sha256": "5318f6ed69c8ce6481862202320746545e25375d4c65fd758ed553fdfe3890ce",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_fonts.c",
+    "sha256": "8a44c8d9a0019c84632f8f0bca793feaa9d5e131badd5bc615cfdabb72fb5c74",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_geometry.c",
+    "sha256": "b49aac489bf8012f3e3cd190ad6198cfcc4401817aaf22eeab3245f58eafbd86",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_icons.c",
+    "sha256": "7ce90a0b44823cdac7915f3ce58f2d9212a4b1432dc1eac95a3b633574ce88dd",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_input.c",
+    "sha256": "f70f58d814ad276ea8a8052e5f68a7e14c3590f1da802f446a0da2c6db87ce8c",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_internal.h",
+    "sha256": "23869efc6d81885f172e25e8b3e6acb1615ad06dbbac9de88107b4e5ec08f729",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_items.c",
+    "sha256": "bfcfdce901b08fc62d8e8b9763a9903409cc4fe51e374c9d6673e1fdea7dc6c4",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_paint.c",
+    "sha256": "6ad9ead6daaa5e5cd4e075d4e09f5288e4e580e0e75dad81d34878f44df1ba89",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_scene.c",
+    "sha256": "ced895d63edee422ad215f19655f9614b697b6ae48ca6f0ab10de863615b529a",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  },
+  {
+    "path": "upstream/src/ui/dial/dial_window.c",
+    "sha256": "f8543ac9fe196240a67c7a790639774203368be563656ffea585e89f29f3ca4d",
+    "commit": "05b7a92cb4b17a4603e939033a5cae2a6a697bdb"
+  }
+]

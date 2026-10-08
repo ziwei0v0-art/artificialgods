@@ -1,0 +1,33 @@
+{
+  "project": "https://github.com/vladelaina/Catime",
+  "commit": "f47ed51044743d55e029872e7844ed6469a253dc",
+  "checked_at": "2026-10-04",
+  "license": "Apache-2.0",
+  "files": [
+    {
+      "path": "src/timer/timer.c",
+      "git_blob_sha": "d9c9e8818f7eaecf54de5506165b84a6ece2c9ee",
+      "sha256": "360264e3f304204ce6145fadc2764b4d417ae480020eb4bb421f880a60a7b72d"
+    },
+    {
+      "path": "src/timer/timer_events_main.c",
+      "git_blob_sha": "faa8d88c9414ea2fd0506f265da1eb0d86972e43",
+      "sha256": "03acaf94f57f9b2b05308f86040eb0b2f68f4bf9876422469b9f849009ba3ce2"
+    },
+    {
+      "path": "src/timer/timer_events_pomodoro.c",
+      "git_blob_sha": "7d814f8f76c044f324e08b1c43379ca411f57821",
+      "sha256": "f05c2c4701deb2da8587669bbf35b73104d229b99c962a326a396de1241d4c51"
+    },
+    {
+      "path": "src/timer/timer_format.c",
+      "git_blob_sha": "1444e271e08e8a66cc0f85f19ce48701d1425ab5",
+      "sha256": "0d59f46d4e1dce283d54e14301f5f23865b065a531390926d09dbf7ab3dabd2c"
+    },
+    {
+      "path": "include/timer/timer.h",
+      "git_blob_sha": "6682b42c7a889f4f05922fd0b888d71f1afaaab4",
+      "sha256": "b18b2fba4cfba8928af7e9fe1dc1b69339629f78efee98570be69b7ea6f23f74"
+    }
+  ]
+}

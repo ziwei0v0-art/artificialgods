@@ -1,0 +1,266 @@
+/**
+ * @file timer.c
+ * @brief Multi-modal timer with high-precision tracking
+ *
+ * QueryPerformanceCounter prevents drift in long-running timers.
+ * Adaptive display formatting reduces visual jitter during transitions.
+ */
+
+#include "timer/timer.h"
+#include "config.h"
+#include "timer/timer_events.h"
+#include "drawing.h"
+#include "menu_preview.h"
+#include "utils/time_parser.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define DEFAULT_FALLBACK_TIME 60  /* 1 minute provides reasonable default when configuration is invalid */
+
+bool CLOCK_IS_PAUSED = false;
+bool CLOCK_SHOW_CURRENT_TIME = false;
+bool CLOCK_USE_24HOUR = true;
+bool CLOCK_SHOW_SECONDS = true;
+bool CLOCK_COUNT_UP = false;
+char CLOCK_STARTUP_MODE[20] = "SHOW_TIME";
+
+int32_t CLOCK_TOTAL_TIME = 0;
+int32_t countdown_elapsed_time = 0;
+int32_t countup_elapsed_time = 0;
+time_t CLOCK_LAST_TIME_UPDATE = 0;
+int32_t last_displayed_second = -1;
+
+static LARGE_INTEGER timer_frequency = {0};
+static LARGE_INTEGER timer_last_count = {0};
+static bool high_precision_timer_initialized = false;
+static int64_t s_suspend_mono_ms = 0;
+static int64_t s_suspend_tick_ms = 0;
+static bool s_suspend_snapshot_valid = false;
+
+bool countdown_message_shown = false;
+int32_t pomodoro_work_cycles = 0;
+
+TimeoutActionType CLOCK_TIMEOUT_ACTION = TIMEOUT_ACTION_MESSAGE;
+char CLOCK_TIMEOUT_TEXT[50] = "";
+char CLOCK_TIMEOUT_FILE_PATH[MAX_PATH] = "";
+char CLOCK_TIMEOUT_WEBSITE_URL[MAX_PATH] = "";
+
+int32_t time_options[MAX_TIME_OPTIONS] = {0};
+int32_t time_options_count = 0;
+
+/* Absolute Time State Definitions (Milliseconds) */
+int64_t g_target_end_time = 0;
+int64_t g_start_time = 0;
+int64_t g_pause_start_time = 0;
+
+/* Monotonic millisecond clock for elapsed/remaining calculations */
+int64_t GetAbsoluteTimeMs(void) {
+    LARGE_INTEGER nowCount;
+
+    if (!high_precision_timer_initialized) {
+        InitializeHighPrecisionTimer();
+    }
+
+    if (high_precision_timer_initialized &&
+        timer_frequency.QuadPart > 0 &&
+        QueryPerformanceCounter(&nowCount)) {
+        return (int64_t)((nowCount.QuadPart * 1000LL) / timer_frequency.QuadPart);
+    }
+
+    return (int64_t)GetTickCount64();
+}
+
+void Timer_OnSystemSuspend(void) {
+    s_suspend_mono_ms = GetAbsoluteTimeMs();
+    s_suspend_tick_ms = (int64_t)GetTickCount64();
+    s_suspend_snapshot_valid = true;
+}
+
+void Timer_OnSystemResume(void) {
+    if (!s_suspend_snapshot_valid) return;
+
+    int64_t now_mono_ms = GetAbsoluteTimeMs();
+    int64_t now_tick_ms = (int64_t)GetTickCount64();
+    int64_t mono_delta = now_mono_ms - s_suspend_mono_ms;
+    int64_t tick_delta = now_tick_ms - s_suspend_tick_ms;
+
+    s_suspend_snapshot_valid = false;
+
+    if (mono_delta < 0) mono_delta = 0;
+    if (tick_delta < 0) tick_delta = 0;
+
+    /* Detect missed suspended duration if monotonic source under-counted sleep time. */
+    int64_t correction_ms = tick_delta - mono_delta;
+    if (correction_ms < 200) return;
+    if (CLOCK_IS_PAUSED || CLOCK_SHOW_CURRENT_TIME) return;
+
+    if (CLOCK_COUNT_UP) {
+        g_start_time -= correction_ms;
+    } else if (CLOCK_TOTAL_TIME > 0) {
+        g_target_end_time -= correction_ms;
+        if (g_target_end_time < now_mono_ms) {
+            g_target_end_time = now_mono_ms;
+        }
+    }
+}
+
+/** Reset QPC baseline to prevent time jumps after pause/resume */
+void InitializeHighPrecisionTimer(void) {
+    if (!QueryPerformanceFrequency(&timer_frequency)) return;
+    if (!QueryPerformanceCounter(&timer_last_count)) return;
+    high_precision_timer_initialized = true;
+}
+
+/** Parse "14 30t" → countdown to target time (assumes next day if in past) */
+static int ParseAbsoluteTime(char* input) {
+    _tzset();
+    time_t now = time(NULL);
+    struct tm tm_target = {0};
+    if (localtime_s(&tm_target, &now) != 0) {
+        return 0;
+    }
+    int hour = -1, minute = -1, second = -1;
+    int count = 0;
+    const char* token = strtok(input, " ");
+
+    while (token && count < 3) {
+        char* endptr;
+        long value = strtol(token, &endptr, 10);
+        if (*endptr != '\0' || value < 0 || value > 59) {
+            return 0;
+        }
+        if (count == 0) {
+            if (value > 23) return 0;
+            hour = (int)value;
+        } else if (count == 1) {
+            minute = (int)value;
+        } else if (count == 2) {
+            second = (int)value;
+        }
+        count++;
+        token = strtok(NULL, " ");
+    }
+
+    if (hour < 0) {
+        return 0;
+    }
+
+    tm_target.tm_hour = hour;
+    tm_target.tm_min = (minute >= 0) ? minute : 0;
+    tm_target.tm_sec = (second >= 0) ? second : 0;
+
+    time_t target_time = mktime(&tm_target);
+    if (target_time <= now) {
+        tm_target.tm_mday += 1;
+        target_time = mktime(&tm_target);
+    }
+
+    return (int)difftime(target_time, now);
+}
+
+/** Parse: "14 30t" (absolute), "1h 30m" (units), "25" or "1 30" (shorthand) */
+int ParseInput(const char* input, int* total_seconds) {
+    if (!total_seconds) return 0;
+    *total_seconds = 0;
+    if (!TimeParser_Validate(input)) return 0;
+
+    char input_copy[256];
+    strncpy(input_copy, input, sizeof(input_copy) - 1);
+    input_copy[sizeof(input_copy) - 1] = '\0';
+
+    size_t len = strlen(input_copy);
+    int result = 0;
+
+    if (len > 0 && (input_copy[len - 1] == 't' || input_copy[len - 1] == 'T')) {
+        input_copy[len - 1] = '\0';
+        result = ParseAbsoluteTime(input_copy);
+    } else if (!TimeParser_ParseAdvanced(input, &result)) {
+        return 0;
+    }
+
+    if (result <= 0 || result > INT_MAX) {
+        return 0;
+    }
+
+    *total_seconds = result;
+    return 1;
+}
+
+BOOL WriteConfigDefaultStartTime(int seconds) {
+    if (seconds <= 0) {
+        return FALSE;
+    }
+
+    char secondsStr[32];
+    if (snprintf(secondsStr, sizeof(secondsStr), "%d", seconds) < 0) {
+        return FALSE;
+    }
+
+    char config_path[MAX_PATH];
+    GetConfigPath(config_path, MAX_PATH);
+
+    char currentValue[32] = {0};
+    ReadIniString(INI_SECTION_TIMER, "CLOCK_DEFAULT_START_TIME", "",
+                  currentValue, sizeof(currentValue), config_path);
+
+    BOOL runtimeMatches = g_AppConfig.timer.default_start_time == seconds;
+    BOOL configMatches = strcmp(currentValue, secondsStr) == 0;
+    if (runtimeMatches && configMatches) {
+        return TRUE;
+    }
+
+    if (!configMatches &&
+        !WriteIniInt(INI_SECTION_TIMER, "CLOCK_DEFAULT_START_TIME", seconds, config_path)) {
+        return FALSE;
+    }
+
+    g_AppConfig.timer.default_start_time = seconds;
+    return TRUE;
+}
+
+/** Fallback to DEFAULT_FALLBACK_TIME if countdown has invalid total time */
+void ResetTimer(void) {
+    int64_t now = GetAbsoluteTimeMs();
+
+    if (CLOCK_COUNT_UP) {
+        countup_elapsed_time = 0;
+        g_start_time = now;
+    } else {
+        countdown_elapsed_time = 0;
+        if (CLOCK_TOTAL_TIME <= 0) {
+            CLOCK_TOTAL_TIME = DEFAULT_FALLBACK_TIME;
+        }
+        g_target_end_time = now + ((int64_t)CLOCK_TOTAL_TIME * 1000);
+    }
+
+    CLOCK_IS_PAUSED = false;
+    countdown_message_shown = false;
+    g_pause_start_time = 0;
+
+    InitializeHighPrecisionTimer();
+    ResetMillisecondAccumulator();
+}
+
+/** Reinitialize timing baseline on resume to prevent time jumps */
+void TogglePauseTimer(void) {
+    bool was_paused = CLOCK_IS_PAUSED;
+    CLOCK_IS_PAUSED = !CLOCK_IS_PAUSED;
+
+    int64_t now = GetAbsoluteTimeMs();
+
+    if (CLOCK_IS_PAUSED && !was_paused) {
+        g_pause_start_time = now;
+        PauseTimerMilliseconds();
+    } else if (!CLOCK_IS_PAUSED && was_paused) {
+        if (g_pause_start_time > 0) {
+            int64_t pause_duration = now - g_pause_start_time;
+            g_target_end_time += pause_duration;
+            g_start_time += pause_duration;
+            g_pause_start_time = 0;
+        }
+        InitializeHighPrecisionTimer();
+        ResetMillisecondAccumulator();
+    }
+}

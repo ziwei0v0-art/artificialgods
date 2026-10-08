@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "sampling": "nearest",
+  "file": "bottle-v01-original.png",
+  "sha256": "418114574e4e3405304ac51753dbafa980253fab3944b4a38738a9e543ba0fa5",
+  "interiorRect": [
+    0.28,
+    0.27,
+    0.44,
+    0.3
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "tool": "built-in image_gen",
+  "mode": "generate",
+  "reference": null,
+  "result": "assets/candidates/kanli_20261008/kanli-fluff-yellow-v1-raw.png",
+  "sha256": "28b4df7c6319f32b7ca54f527bf581f4137cd538051f5419adb44a4c4cb03250",
+  "prompt_summary": "Yellow rounded tile, cream soft fluffy low puddle, tiny warm eyes and rounded nubs; reduce threatening spider features.",
+  "status": "User-requested yellow redesign; generated, inspected after alpha compositing at 32/64/128/256 pixels and integrated; user visual acceptance pending.",
+  "selection": "Fresh v1 adopted. Cleanup variation retained as candidate only. No edits to generated PNG bytes.",
+  "alpha_note": "Outside edge band alpha <= 1/255; near-transparent hidden RGB is not an opaque yellow fringe. Actual white/dark compositions inspected."
+}

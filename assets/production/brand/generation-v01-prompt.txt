@@ -1,0 +1,8 @@
+Tool: built-in image_gen
+Mode: edit
+Reference: evidence/1.0/172-brand/current-app-icon.png
+transparent_background: true
+
+Use case: precise-object-edit / stylized-concept. Asset: one polished macOS application icon for the cozy desktop game《天姥花园》, no lettering anywhere. Edit the supplied existing app icon. Preserve its single cream-white spider identity, sage/jade-green rounded-square background tile, centered simple composition, two kind dark eyes with small highlights, and subtle warm cheeks. The user specifically wants the spider softer, squishier and fluffy. Replace the hard flat geometric body and angular stick legs with a cuddly compact round fuzzy spider: visible short soft cream fur in broad clean tufts around a plump body, eight short rounded soft legs arranged clearly four on each side, gently curved and tucked close, warm gentle face. Soft illustrated plush texture with restrained dimensional shading; clean and readable as a 32px app icon. Keep the large rounded silhouette and strong cream-on-muted-green contrast, no busy individual hair noise and no fine background texture. Do not add a crown, hat, flowers, clothing, fangs, extra facial features, web, sparkles, props, words, border, or a second character. The green rounded-square tile remains opaque and matches the reference color; outside that tile retain genuine transparency, no black or white canvas. Front view, complete centered icon with balanced margins, refined cohesive artwork, square 1024x1024 composition.
+
+Requested composition: 1024 square. Actual returned image: 1254 × 1254 RGBA. Raw generation preserved; macOS icon conversion is a separate packaging step.

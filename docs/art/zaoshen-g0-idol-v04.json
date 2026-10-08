@@ -1,0 +1,48 @@
+{
+  "asset": "assets/production/scene/G0-idol-double-body-v04.png",
+  "tool": "built-in image_gen",
+  "intent": "entire anatomy and drapery redraw from canonical reference; localized scissor-hand refinement",
+  "status": "182 in-game candidate; user visual and overall acceptance pending",
+  "sha256": "7838bbf7f8518bca6108f7044cfd8b24f83da07844c9ad9c498f507489dd742c",
+  "dimensions": [
+    1215,
+    1295
+  ],
+  "alpha_extrema": [
+    0,
+    255
+  ],
+  "prompts": [
+    "docs/art/zaoshen-g0-idol-v04-redraw.txt",
+    "docs/art/zaoshen-g0-idol-v04-hand.txt"
+  ],
+  "source_reference_sha256": "8862b193304adbced6a51a7628d9be1a0aa5ca16178f5f153ebe0b4b8a9dd7c2",
+  "source_reference_distributed": false,
+  "source_reference_open_license": "not recorded; no redistribution of source reference",
+  "accessory_eye_design_total": 6,
+  "all_six_required_visible": false,
+  "rear_eye": "closed",
+  "layout": {
+    "id": "idol",
+    "file": "G0-idol-double-body-v04.png",
+    "sourceRect": [
+      71,
+      49,
+      1096,
+      1227
+    ],
+    "bounds": [
+      155.479185,
+      195.288977,
+      75.041631,
+      84.011023
+    ]
+  },
+  "layout_intent": "Preserve corrected 83-percent height and bottom center; crown stays below shrine beam",
+  "stage_scope": "G0/G1; G2 separate resource unchanged",
+  "visual_limits": [
+    "farther feet partly hidden by robes and perspective",
+    "facial eye dots not individually readable at default game scale"
+  ],
+  "rejected_intermediate": "v8 foot refinement introduced an extra apparent foot and was not integrated"
+}

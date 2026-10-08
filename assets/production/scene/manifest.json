@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "sampling": "nearest",
+  "attendantHeight": 118,
+  "layers": [
+    {
+      "id": "shrine",
+      "file": "G0-shrine-v01.png",
+      "sourceRect": [
+        59,
+        109,
+        1136,
+        1097
+      ],
+      "bounds": [
+        95,
+        130,
+        192,
+        185.4
+      ]
+    },
+    {
+      "id": "idol",
+      "file": "G0-idol-double-body-v04.png",
+      "sourceRect": [
+        71,
+        49,
+        1096,
+        1227
+      ],
+      "bounds": [
+        155.479185,
+        195.288977,
+        75.041631,
+        84.011023
+      ]
+    },
+    {
+      "id": "incense",
+      "file": "G0-incense-v01.png",
+      "sourceRect": [
+        132,
+        256,
+        1110,
+        701
+      ],
+      "bounds": [
+        158,
+        265,
+        30,
+        18.95
+      ]
+    },
+    {
+      "id": "fruit",
+      "file": "G0-fruit-fresh-v01.png",
+      "sourceRect": [
+        372,
+        191,
+        822,
+        637
+      ],
+      "bounds": [
+        203,
+        260,
+        31,
+        24.02
+      ]
+    }
+  ],
+  "fruitVariants": {
+    "fresh": {
+      "file": "G0-fruit-fresh-v01.png",
+      "sourceRect": [
+        372,
+        191,
+        822,
+        637
+      ]
+    },
+    "soft": {
+      "file": "G0-fruit-soft-v01.png",
+      "sourceRect": [
+        372,
+        191,
+        822,
+        637
+      ]
+    },
+    "ripe": {
+      "file": "G0-fruit-ripe-v01.png",
+      "sourceRect": [
+        372,
+        191,
+        822,
+        637
+      ]
+    }
+  },
+  "incenseAnchor": [
+    0.5,
+    0.24
+  ],
+  "appearances": {
+    "offering_plate": {
+      "layers": [
+        {
+          "id": "fruit",
+          "file": "plate-fresh-v01-original.png",
+          "sourceRect": [
+            371,
+            190,
+            825,
+            640
+          ],
+          "bounds": [
+            203,
+            260,
+            31,
+            24.02
+          ]
+        }
+      ],
+      "fruitVariants": {
+        "fresh": {
+          "file": "plate-fresh-v01-original.png",
+          "sourceRect": [
+            371,
+            190,
+            825,
+            640
+          ]
+        },
+        "soft": {
+          "file": "plate-soft-v01-original.png",
+          "sourceRect": [
+            371,
+            190,
+            825,
+            640
+          ]
+        },
+        "ripe": {
+          "file": "plate-ripe-v01-original.png",
+          "sourceRect": [
+            371,
+            190,
+            825,
+            640
+          ]
+        }
+      }
+    },
+    "incense_burner": {
+      "layers": [
+        {
+          "id": "incense",
+          "file": "clay-incense-v01-original.png",
+          "sourceRect": [
+            133,
+            256,
+            1109,
+            701
+          ],
+          "bounds": [
+            158,
+            265,
+            30,
+            18.95
+          ]
+        }
+      ],
+      "incenseAnchor": [
+        0.5,
+        0.24
+      ]
+    },
+    "bell": {
+      "layers": [
+        {
+          "id": "bell",
+          "file": "bell-v01-original.png",
+          "sourceRect": [
+            362,
+            287,
+            459,
+            756
+          ],
+          "bounds": [
+            242,
+            256,
+            17,
+            28
+          ]
+        }
+      ]
+    },
+    "shrine_g1": {
+      "layers": [
+        {
+          "id": "shrine",
+          "file": "shrine-g1-v01-original.png",
+          "sourceRect": [
+            56,
+            106,
+            1143,
+            1103
+          ],
+          "bounds": [
+            95,
+            130,
+            192,
+            185.4
+          ]
+        }
+      ]
+    },
+    "shrine_g2": {
+      "layers": [
+        {
+          "id": "shrine",
+          "file": "shrine-g2-v01-original.png",
+          "sourceRect": [
+            56,
+            106,
+            1143,
+            1103
+          ],
+          "bounds": [
+            95,
+            130,
+            192,
+            185.4
+          ]
+        },
+        {
+          "id": "idol",
+          "file": "idol-g2-v02-original.png",
+          "sourceRect": [
+            79,
+            52,
+            1059,
+            1191
+          ],
+          "bounds": [
+            148,
+            178.0819,
+            90,
+            101.2181
+          ]
+        }
+      ]
+    }
+  }
+}

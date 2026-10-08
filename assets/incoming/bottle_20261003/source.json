@@ -1,0 +1,13 @@
+{
+  "tool": "built-in image_gen",
+  "generated_file": "<LOCAL_GENERATED_IMAGES>/exec-81fea862-935c-4974-82ca-077f54d01ea6.png",
+  "file": "bottle-v01-original.png",
+  "sha256": "418114574e4e3405304ac51753dbafa980253fab3944b4a38738a9e543ba0fa5",
+  "accepted": false,
+  "integrated": true,
+  "original_modified": false,
+  "prompt_summary": "Single transparent empty squat glass insect bottle, simple cork, crisp limited-palette pixel art, broad empty body for separately rendered inventory insects; no contents/text/background.",
+  "prompt": "Use case: stylized-concept. Asset type: ONE production pixel-art UI sprite, an empty transparent glass insect-keeping bottle for a quiet Chinese desktop shrine game. Primary request: a clearly recognizable squat wide-bodied glass bottle/jar, front view, centered, complete from a small simple warm wooden cork stopper through a short neck and rounded shoulders to a broad stable flattened base. The body has ample empty space for separately rendered tiny fruit flies. Medium: pure readable pixel art, deliberately limited palette, large calm color clusters and crisp stepped edges, like a carefully hand-drawn 96px-tall inventory sprite enlarged with nearest-neighbor; no fine texture, no noisy highlights, no smooth painterly gradients. Glass edge colors muted warm gray and soft desaturated jade, modest off-white highlights on the outer sides, stopper warm brown. Composition: single bottle upright, centered, occupying roughly 65% of width and 84% of height on a square transparent canvas, ample transparent margin on every side. Glass interior must be genuinely largely transparent so flies and a cream UI background can show through; small semi-transparent hints of glass near the silhouette only, inner central body almost entirely alpha zero. Keep bottle silhouette legible on both cream and dark backgrounds. Outside the bottle is genuinely alpha transparent. Avoid: flies, insects, flowers, leaves, water, sand, contents, labels, text, symbols, numbers, ruler, stand, ornamental rope, scene, floor, cast shadow, checkerboard baked into artwork, solid white interior, photo-real refraction, vector/geometric placeholder styling. Output only the single empty glass bottle asset, no presentation board or UI.",
+  "technical_review": "Passed actual 200 pt alpha composite on light and dark backgrounds with both production insect styles; user visual acceptance pending.",
+  "accepted_by_user": false
+}

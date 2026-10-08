@@ -1,0 +1,9 @@
+{
+  "tool": "built-in image_gen",
+  "mode": "edit",
+  "reference": "evidence/1.0/172-brand/current-app-icon.png",
+  "result": "assets/candidates/brand_20261007/天姥花园_软毛蜘蛛_v1_原图.png",
+  "sha256": "9a29df6e661f3a66915e05d4ad57827c5557e70d9d20ca98fa91bd73d5844822",
+  "prompt_summary": "Preserve cream spider and sage green rounded tile; eight short rounded legs, squishy round body, soft cream fur, two gentle dark eyes, tiny warm cheeks; icon readable at32px; no text/crown/props, genuine alpha outside tile.",
+  "status": "user-requested first iteration; generated and visually inspected; not user accepted"
+}

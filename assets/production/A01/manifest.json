@@ -1,0 +1,301 @@
+{
+  "version": 1,
+  "sampling": "nearest",
+  "stand": {
+    "file": "stand-pixel-20261001.png",
+    "facing": "right",
+    "sourceRect": [
+      318,
+      356,
+      489,
+      978
+    ]
+  },
+  "fixedWalk": {
+    "sourceSize": [
+      489,
+      978
+    ],
+    "bodyCutY": 882,
+    "legStartY": 858,
+    "legSplitX": 278,
+    "maxRootStep": 80,
+    "footLift": 32
+  },
+  "fixedActions": {
+    "sourceSize": [
+      489,
+      978
+    ],
+    "catch": {
+      "nearSleeve": {
+        "mask": [
+          [
+            0,
+            583
+          ],
+          [
+            235,
+            583
+          ],
+          [
+            235,
+            610
+          ],
+          [
+            265,
+            640
+          ],
+          [
+            265,
+            734
+          ],
+          [
+            250,
+            766
+          ],
+          [
+            218,
+            803
+          ],
+          [
+            218,
+            846
+          ],
+          [
+            212,
+            861
+          ],
+          [
+            0,
+            861
+          ]
+        ],
+        "pivot": [
+          217,
+          591
+        ],
+        "hand": [
+          181,
+          797
+        ]
+      },
+      "torsoUnderlay": {
+        "file": "torso-underlay-v01-original.png",
+        "sourceRect": [
+          364,
+          548,
+          394,
+          518
+        ],
+        "bounds": [
+          194,
+          555,
+          218,
+          313
+        ],
+        "bodyArea": [
+          [
+            218,
+            568
+          ],
+          [
+            330,
+            566
+          ],
+          [
+            360,
+            620
+          ],
+          [
+            390,
+            862
+          ],
+          [
+            195,
+            862
+          ],
+          [
+            190,
+            758
+          ],
+          [
+            205,
+            646
+          ]
+        ]
+      },
+      "net": {
+        "file": "net-v01-original.png",
+        "sourceRect": [
+          279,
+          116,
+          555,
+          1306
+        ],
+        "height": 400,
+        "grip": [
+          0.32,
+          0.89
+        ],
+        "rotation": 110
+      }
+    },
+    "daily": {
+      "farSleeve": {
+        "mask": [
+          [
+            345,
+            603
+          ],
+          [
+            489,
+            603
+          ],
+          [
+            489,
+            815
+          ],
+          [
+            395,
+            815
+          ],
+          [
+            381,
+            785
+          ],
+          [
+            370,
+            725
+          ],
+          [
+            351,
+            663
+          ]
+        ],
+        "pivot": [
+          348,
+          633
+        ]
+      },
+      "head": {
+        "mask": [
+          [
+            0,
+            0
+          ],
+          [
+            489,
+            0
+          ],
+          [
+            489,
+            568
+          ],
+          [
+            0,
+            568
+          ]
+        ],
+        "pivot": [
+          296,
+          556
+        ]
+      },
+      "handCover": [
+        155,
+        779,
+        48,
+        29
+      ],
+      "props": {
+        "book": {
+          "file": "book-v01-original.png",
+          "sourceRect": [
+            330,
+            341,
+            876,
+            402
+          ],
+          "height": 100,
+          "grip": [
+            0.5,
+            0.9
+          ]
+        },
+        "broom": {
+          "file": "broom-v01-original.png",
+          "sourceRect": [
+            376,
+            96,
+            317,
+            1284
+          ],
+          "grip": [
+            0.5,
+            0.3
+          ],
+          "groundY": 976
+        },
+        "fruit": {
+          "file": "G0-fruit-fresh-v01.png",
+          "sourceRect": [
+            372,
+            191,
+            822,
+            637
+          ],
+          "height": 130,
+          "grip": [
+            0.5,
+            0.9
+          ]
+        },
+        "bell": {
+          "file": "bell-v01-original.png",
+          "sourceRect": [
+            362,
+            287,
+            459,
+            756
+          ],
+          "height": 170,
+          "grip": [
+            0.5,
+            0.13
+          ]
+        },
+        "incense": {
+          "file": "incense-stick-v01-original.png",
+          "sourceRect": [
+            494,
+            222,
+            36,
+            1100
+          ],
+          "height": 240,
+          "grip": [
+            0.5,
+            0.92
+          ],
+          "rotation": 15,
+          "minCoreWidth": 1.5
+        },
+        "paper": {
+          "file": "paper-slip-v01-original.png",
+          "sourceRect": [
+            291,
+            265,
+            444,
+            1009
+          ],
+          "height": 165,
+          "grip": [
+            0.5,
+            0.9
+          ]
+        }
+      }
+    }
+  }
+}
