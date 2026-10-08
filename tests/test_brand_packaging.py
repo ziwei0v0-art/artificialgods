@@ -39,8 +39,8 @@ class BrandPackagingTests(unittest.TestCase):
         self.assertEqual(normal['CFBundleExecutable'], 'Tianmu')
         self.assertEqual(normal['CFBundleIdentifier'], 'local.tianmu.garden')
         self.assertEqual(qa['CFBundleIdentifier'], 'local.tianmu.garden.qa')
-        self.assertEqual(normal['CFBundleShortVersionString'], '1.0.6')
-        self.assertEqual(normal['CFBundleVersion'], '26')
+        self.assertEqual(normal['CFBundleShortVersionString'], '1.0.7')
+        self.assertEqual(normal['CFBundleVersion'], '27')
         self.assertEqual(normal['TianmuPythonExecutable'], 'Runtime/bin/python3')
         self.assertNotIn('TianmuQASaveFile', normal)
 

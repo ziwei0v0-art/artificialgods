@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import Combine
 import Foundation
+import Darwin
 
 let pageNames = ["求签", "虫瓶", "装扮"]
 let paper = Color(red: 0.97, green: 0.95, blue: 0.90)
@@ -43,6 +44,165 @@ func startWorker() throws -> (Process, Pipe, Pipe) {
 func write(_ request: [String: Any], to pipe: Pipe) {
     guard let data = try? JSONSerialization.data(withJSONObject: request) else { return }
     pipe.fileHandleForWriting.write(data + Data([10]))
+}
+
+// nil means the kernel snapshot is unavailable, never an empty process group.
+func groupHasLiveMembers(_ group: pid_t) -> Bool? {
+    guard group > 1 else { return nil }
+    var query: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PGRP, group]
+    let queryCount = u_int(query.count)
+    let stride = MemoryLayout<kinfo_proc>.stride
+    for _ in 0..<3 {
+        var required = 0
+        guard sysctl(&query, queryCount, nil, &required, nil, 0) == 0 else { return nil }
+        // Typed storage preserves alignment; retry boundedly if the group grew.
+        let capacity = required / stride + 1
+        var members = [kinfo_proc](repeating: kinfo_proc(), count: capacity)
+        var actual = capacity * stride
+        let result = members.withUnsafeMutableBufferPointer { buffer in
+            sysctl(&query, queryCount, buffer.baseAddress, &actual, nil, 0)
+        }
+        if result != 0 {
+            if errno == ENOMEM { continue }
+            return nil
+        }
+        guard actual <= capacity * stride, actual % stride == 0 else { return nil }
+        return members.prefix(actual / stride).contains {
+            $0.kp_eproc.e_pgid == group && Int32($0.kp_proc.p_stat) != SZOMB
+        }
+    }
+    return nil
+}
+
+// Owns only the process created for this Store. Pipe writes never occupy the UI
+// or the watchdog queue, so an unread stdin cannot prevent TERM/KILL delivery.
+final class OwnedWorker {
+    let process: Process
+    let input: Pipe
+    let output: Pipe
+    private let writer = DispatchQueue(label: "artificialgods.worker.writer")
+    private let watchdog = DispatchQueue(label: "artificialgods.worker.shutdown")
+    private let groupLock = NSLock()
+    private var processGroup: pid_t?
+    private var stopping = false
+    private var finished = false
+    private var termSent = false
+    private var killSent = false
+    private var termAt: UInt64 = 0
+    private var killAt: UInt64 = 0
+    private var callbacks: [() -> Void] = []
+
+    init(process: Process, input: Pipe, output: Pipe) {
+        self.process = process; self.input = input; self.output = output
+        // Foundation has duplicated the child's ends. Do not retain a phantom
+        // reader which could keep our writer blocked after the child dies.
+        try? input.fileHandleForReading.close()
+        try? output.fileHandleForWriting.close()
+        _ = fcntl(input.fileHandleForWriting.fileDescriptor, F_SETNOSIGPIPE, 1)
+        verifyProcessGroup()
+    }
+
+    func verifyProcessGroup() {
+        let pid = process.processIdentifier
+        guard process.isRunning, pid > 0, getpgid(pid) == pid else { return }
+        groupLock.lock(); processGroup = pid; groupLock.unlock()
+    }
+
+    private var verifiedGroup: pid_t? {
+        groupLock.lock(); defer { groupLock.unlock() }
+        return processGroup
+    }
+
+    func send(_ request: [String: Any], closeInput: Bool = false, failed: (() -> Void)? = nil) {
+        guard let data = try? JSONSerialization.data(withJSONObject: request) else {
+            failed?(); return
+        }
+        writer.async { [self] in
+            do {
+                try input.fileHandleForWriting.write(contentsOf: data + Data([10]))
+                if closeInput { try input.fileHandleForWriting.close() }
+            } catch {
+                if let failed { DispatchQueue.main.async(execute: failed) }
+            }
+        }
+    }
+
+    private func signalOwned(_ signal: Int32) {
+        verifyProcessGroup()
+        if let group = verifiedGroup {
+            _ = Darwin.kill(-group, signal)
+        } else if process.isRunning, process.processIdentifier > 0 {
+            _ = Darwin.kill(process.processIdentifier, signal)
+        }
+    }
+
+    private var groupIsRunning: Bool {
+        guard let group = verifiedGroup else { return false }
+        if process.isRunning { return true }
+        // Darwin can return EPERM for a group containing only zombies. Such
+        // processes have already exited and cannot release anything by signal.
+        // Inspect only this previously verified group, not the machine's tasks.
+        if let live = groupHasLiveMembers(group) { return live }
+        return Darwin.kill(-group, 0) == 0 || errno == EPERM
+    }
+
+    func shutdown(request: [String: Any], completion: @escaping () -> Void) {
+        watchdog.async { [self] in
+            if finished { DispatchQueue.main.async(execute: completion); return }
+            callbacks.append(completion)
+            guard !stopping else { return }
+            stopping = true
+            verifyProcessGroup()
+            let now = DispatchTime.now().uptimeNanoseconds
+            termAt = now + 1_000_000_000
+            killAt = termAt + 200_000_000
+            // EOF also releases a responsive recovery or save-failed session.
+            send(request, closeInput: true)
+            pollForExit()
+        }
+    }
+
+    func forceStop(completion: (() -> Void)? = nil) {
+        // applicationWillTerminate may be the last callback before process exit.
+        // Deliver the signal now; never enqueue it behind a blocked pipe write.
+        signalOwned(SIGKILL)
+        watchdog.async { [self] in
+            if let completion {
+                if finished { DispatchQueue.main.async(execute: completion); return }
+                callbacks.append(completion)
+            }
+            killSent = true
+            if !stopping {
+                stopping = true
+                pollForExit()
+            }
+        }
+    }
+
+    private func pollForExit() {
+        verifyProcessGroup()
+        let running = process.isRunning
+        let groupRunning = groupIsRunning
+        if !running && !groupRunning {
+            finished = true
+            groupLock.lock(); processGroup = nil; groupLock.unlock()
+            let completions = callbacks; callbacks.removeAll()
+            writer.async { [self] in try? input.fileHandleForWriting.close() }
+            DispatchQueue.main.async {
+                for completion in completions { completion() }
+            }
+            return
+        }
+        let now = DispatchTime.now().uptimeNanoseconds
+        if !killSent {
+            if !termSent && (now >= termAt || !running) {
+                signalOwned(SIGTERM); termSent = true
+                killAt = now + 200_000_000
+            }
+            if termSent && now >= killAt { signalOwned(SIGKILL); killSent = true }
+        }
+        watchdog.asyncAfter(deadline: .now() + 0.02) { [self] in pollForExit() }
+    }
 }
 
 // Startup greetings and heartbeat snapshots are not the numbered check reply.
@@ -95,6 +255,11 @@ final class Store: ObservableObject {
     private var quitRequests = Set<Int>()
     private var expectedShutdown = false
     private var connectionEnded = false
+    private var ownedWorker: OwnedWorker?
+    private(set) var isShuttingDown = false
+    private var shutdownFinished = false
+    private var shutdownCompletions: [() -> Void] = []
+    var workerLauncher: () throws -> (Process, Pipe, Pipe) = startWorker
     lazy var recoveryControls = RecoveryControls(store: self)
     @Published var sceneTransparency: Double = 100
     @Published var sceneScale: Double = 75
@@ -196,7 +361,17 @@ final class Store: ObservableObject {
     var coins: Int { state["coins"] as? Int ?? 0 }
     func rows(_ key: String) -> [[String: Any]] { state[key] as? [[String: Any]] ?? [] }
     func start() {
-        guard process?.isRunning != true else { return }
+        guard !isShuttingDown, process?.isRunning != true else { return }
+        if let previous = ownedWorker {
+            // A failed parent can leave compiler children in its owned group.
+            // Keep ownership until that entire group is gone before replacing it.
+            previous.forceStop { [weak self, weak previous] in
+                guard let self, let previous, self.ownedWorker === previous else { return }
+                self.ownedWorker = nil
+                self.start()
+            }
+            return
+        }
         workerGeneration += 1
         let generation = workerGeneration
         runtimePhase = "starting"; startupIssue = nil; recoveryInfo = nil
@@ -204,9 +379,14 @@ final class Store: ObservableObject {
         buffer = Data(); lastReplyID = 0; message = "正在读取小庙…"
         recoveryControls.refresh()
         do {
-            let (process, input, output) = try startWorker()
+            let (process, input, output) = try workerLauncher()
             self.process = process; self.input = input; self.output = output
-            process.terminationHandler = { [weak self] process in
+            let worker = OwnedWorker(process: process, input: input, output: output)
+            ownedWorker = worker
+            process.terminationHandler = { [weak self, weak worker] process in
+                // A failed worker may leave compiler children. Retire its exact
+                // group now instead of caching a PID through a long failed UI.
+                worker?.forceStop()
                 DispatchQueue.main.async {
                     guard let self, generation == self.workerGeneration else { return }
                     // stdout's final data can already be queued on another callback.
@@ -257,6 +437,8 @@ final class Store: ObservableObject {
         if let retryStartup { retryStartup() } else { start() }
     }
     func receive(_ data: Data) {
+        ownedWorker?.verifyProcessGroup()
+        guard !isShuttingDown else { return }
         buffer.append(data)
         while let end = buffer.firstIndex(of: 10) {
             let line = buffer.prefix(upTo: end); buffer.removeSubrange(...end)
@@ -324,6 +506,7 @@ final class Store: ObservableObject {
         }
     }
     func send(_ action: String, _ values: [String: Any] = [:], completion: ((Bool) -> Void)? = nil) {
+        guard !isShuttingDown else { completion?(false); return }
         if runtimePhase == "failed" || (runtimePhase == "recovery" && !["recovery_inspect", "recovery_restore", "quit"].contains(action)) {
             completion?(false); return
         }
@@ -335,10 +518,54 @@ final class Store: ObservableObject {
         if action == "quit" { quitRequests.insert(number) }
         var request = values; request["action"] = action; request["id"] = number
         if let requestSink { requestSink(request) }
-        else if let input { write(request, to: input) }
+        else if let ownedWorker {
+            let generation = workerGeneration
+            ownedWorker.send(request, failed: { [weak self] in
+                guard let self, generation == self.workerGeneration, !self.isShuttingDown else { return }
+                self.transportStopped(status: nil, fallback: "数据服务连接已关闭，请重新打开。原存档没有被清空。")
+            })
+        }
     }
     func cancelSale() { saleRevision &+= 1; sale = nil; send("sale_cancel") }
-    func stop() { send("quit"); output?.fileHandleForReading.readabilityHandler = nil }
+    func shutdown(completion: @escaping () -> Void) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [self] in shutdown(completion: completion) }
+            return
+        }
+        if shutdownFinished { DispatchQueue.main.async(execute: completion); return }
+        shutdownCompletions.append(completion)
+        guard !isShuttingDown else { return }
+        beginShutdown()
+        guard let ownedWorker else { finishShutdown(); return }
+        number += 1
+        ownedWorker.shutdown(request: ["id": number, "action": "quit"]) { [weak self] in
+            self?.finishShutdown()
+        }
+    }
+
+    private func beginShutdown() {
+        isShuttingDown = true; expectedShutdown = true; connectionEnded = true
+        let pending = Array(completions.values)
+        completions.removeAll(); quitRequests.removeAll(); saleRequests.removeAll()
+        for completion in pending { completion(false) }
+    }
+
+    private func finishShutdown() {
+        guard !shutdownFinished else { return }
+        shutdownFinished = true
+        output?.fileHandleForReading.readabilityHandler = nil
+        let callbacks = shutdownCompletions; shutdownCompletions.removeAll()
+        for callback in callbacks { callback() }
+    }
+
+    func forceStop() {
+        if !isShuttingDown {
+            shutdown(completion: {})
+        }
+        ownedWorker?.forceStop()
+    }
+
+    func stop() { shutdown(completion: {}) }
 }
 
 struct SmallHeading: View {
@@ -1099,7 +1326,7 @@ struct PanelView: View {
                             SceneSizeControl(store: store)
                             SceneTransparencyControl(store: store)
                             VStack(alignment: .leading, spacing: 6) {
-                                Picker("点击退出时", selection: Binding(get: { store.exitAction }, set: { store.setExitAction($0) })) {
+                                Picker("场景菜单的退出", selection: Binding(get: { store.exitAction }, set: { store.setExitAction($0) })) {
                                     ForEach(SceneExitAction.allCases, id: \.self) { action in Text(action.title).tag(action) }
                                 }
                                 Text(store.exitAction.detail).font(.caption).foregroundStyle(.secondary)
@@ -2150,6 +2377,10 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
     }
     var timerPlacementURL: URL?
     var terminateApplication: () -> Void = { NSApp.terminate(nil) }
+    var replyToTermination: (Bool) -> Void = { NSApp.reply(toApplicationShouldTerminate: $0) }
+    private var terminationRequested = false
+    private var terminationReady = false
+    private var shutdownUIClosed = false
     lazy var timerTools: TimerToolWindows = {
         let tools = TimerToolWindows(controls: store.timerControls, screens: { [weak self] in self?.availableScreens() ?? [] }, placementURL: timerPlacementURL)
         tools.onExpand = { [weak self] custom in
@@ -2195,10 +2426,8 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         store.notifications.refresh()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         updateStatusIcon()
-        let menu = makeSceneMenu()
-        statusItem.button?.target = self
-        statusItem.button?.action = #selector(openStatusMenu)
-        contextMenu = menu
+        configureStatusMenu()
+        contextMenu = makeSceneMenu()
         configureSceneActions()
         outsideMonitor = NSEvent.addGlobalMonitorForEvents(matching:[.leftMouseDown,.leftMouseDragged,.leftMouseUp,.rightMouseDown,.otherMouseDown]) { [weak self] event in
             _ = self?.handleGlobalEvent(event)
@@ -2312,6 +2541,19 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         }
     }
     func makeSceneMenu() -> NSMenu {
+        makeMenu(quitAction: #selector(quit))
+    }
+    func makeStatusMenu() -> NSMenu {
+        let menu = makeMenu(quitAction: #selector(quitApplication))
+        menu.items.last?.keyEquivalent = "q"
+        menu.items.last?.keyEquivalentModifierMask = .command
+        return menu
+    }
+    func configureStatusMenu() {
+        statusItem.menu = makeStatusMenu()
+        statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+    }
+    private func makeMenu(quitAction: Selector) -> NSMenu {
         let menu = NSMenu(); menu.delegate = self
         for route in menuRoutes {
             let item = NSMenuItem(title: route, action: #selector(selectRoute(_:)), keyEquivalent: "")
@@ -2321,7 +2563,7 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         let size = NSMenuItem(title: "大小", action: nil, keyEquivalent: "")
         size.view = SceneSizeMenuView(store: store); menu.addItem(size)
         menu.addItem(.separator())
-        for (title, action) in [("显示", #selector(showPet)), ("退出", #selector(quit))] {
+        for (title, action) in [("显示", #selector(showPet)), ("退出", quitAction)] {
             let item = NSMenuItem(title: title, action: action, keyEquivalent: ""); item.target = self; menu.addItem(item)
         }
         return menu
@@ -2385,6 +2627,7 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
     sceneMenuPresenter?(contextMenu,point,scene)
 }
     private func presentSceneMenu(frame: NSRect, direction:SceneMenuDirection = .up) {
+        guard !terminationRequested else { return }
         invalidateAmbientContext()
         dismissPanel(); timerTools.dismissQuick(); adjustmentHandle.dismiss(); desktopInsects?.cancelCapture()
         scene.cancelInteraction(); manualInteraction = false; sceneMenuPresented = true; menuTracking = true
@@ -2432,14 +2675,6 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
     }
     @objc private func closeSceneMenu() { dismissSceneMenu() }
     @objc private func showFromMenu() { dismissSceneMenu(); showPet() }
-    @objc func openStatusMenu() {
-    if sceneMenuPresented { dismissSceneMenu(); return }
-    guard let button = statusItem?.button, let window = button.window else { openSceneMenu(); return }
-    let anchor = window.convertToScreen(button.convert(button.bounds,to:nil))
-    let screen = window.screen?.visibleFrame ?? availableScreens().first ?? anchor.insetBy(dx:-264,dy:-166)
-    let placement = SceneSemicircleLayout.placement(near:anchor,in:screen,preferred:.down)
-    presentSceneMenu(frame:placement.frame,direction:placement.direction)
-}
     func dismissSceneMenu() {
         invalidateAmbientContext()
         (sceneMenuWindow?.contentView as? SceneDialSurface)?.stopAnimation()
@@ -2699,6 +2934,7 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         statusItem?.button?.setAccessibilityLabel(reminder ? "灶神，计时结束" : "灶神")
     }
     func showReminder() {
+        guard !terminationRequested else { return }
         reminderGeneration += 1
         let generation = reminderGeneration
         updateStatusIcon(reminder:true)
@@ -2733,6 +2969,7 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         }
     }
     func requestFortune() {
+        guard !terminationRequested else { return }
         guard store.startupIssue == nil else { openRoute("设置");return }
         guard !isSleeping,!fortuneRequesting else { return }
         if petHidden { showPet() }
@@ -2788,10 +3025,12 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         fortuneWindow=card;fortunePresenter(card)
     }
     func detachTimer() {
+        guard !terminationRequested else { return }
         dismissPanel()
         timerTools.showDetached(near: overlay.frame)
     }
     func openRoute(_ requestedRoute: String) {
+        guard !terminationRequested else { return }
         dismissSceneMenu()
         let route = store.startupIssue == nil ? canonicalRoute(requestedRoute) : "设置"
         guard menuRoutes.contains(route) else { return }
@@ -2817,6 +3056,7 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
     }
     @objc func showPanel() { openRoute("神前") }
     @objc func showTimer() {
+        guard !terminationRequested else { return }
         guard store.startupIssue == nil else { openRoute("设置"); return }
         dismissFortune(cancelPending:true)
         scene.cancelInteraction(); desktopInsects?.cancelCapture(); dismissPanel()
@@ -2842,10 +3082,32 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
     }
     @objc func hidePet() { invalidateAmbientContext(); onboardingGuide.dismiss(); discoveryNotice.dismiss(); scene.cancelInteraction(); dismissSceneMenu(); dismissPanel(); dismissFortune(cancelPending:true); sceneAdjustmentActive = false; manualInteraction = false; adjustmentHandle.dismiss(); captureFeedback.dismiss(); petHidden = true; overlay.ignoresMouseEvents = true; overlay.orderOut(nil) }
     func hideDesktopCompanions() { hidePet(); desktopInsectsHidden = true; desktopInsects?.hide() }
-    @objc func showPet() { invalidateAmbientContext(); guard store.startupIssue == nil else { openRoute("设置"); return }; petHidden = false; desktopInsectsHidden = false; overlay.ignoresMouseEvents = true; overlayPresenter(overlay); desktopInsects?.show(); refreshOnboarding() }
+    @objc func showPet() { guard !terminationRequested else { return }; invalidateAmbientContext(); guard store.startupIssue == nil else { openRoute("设置"); return }; petHidden = false; desktopInsectsHidden = false; overlay.ignoresMouseEvents = true; overlayPresenter(overlay); desktopInsects?.show(); refreshOnboarding() }
+    private func closeUIForTermination() {
+        guard !shutdownUIClosed else { return }
+        shutdownUIClosed = true
+        terminationRequested = true
+        if let monitor = outsideMonitor { NSEvent.removeMonitor(monitor); outsideMonitor = nil }
+        if let monitor = localMonitor { NSEvent.removeMonitor(monitor); localMonitor = nil }
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
+        pointerTimer?.invalidate(); pointerTimer = nil
+        store.onReminder = nil; store.onState = nil; store.onDiscovery = nil; store.onRuntimeChange = nil
+        store.notifications.onOpenTimer = nil
+        reminderGeneration += 1; reminderWindow?.orderOut(nil)
+        dismissFortune(cancelPending:true); dismissSceneMenu()
+        adjustmentHandle.dismiss(); captureFeedback.dismiss(); onboardingGuide.dismiss(); discoveryNotice.dismiss()
+        scene?.cancelInteraction(); desktopInsects?.close(); timerTools.dismissAll()
+        sceneAdjustmentActive = false; manualInteraction = false
+        petHidden = true; desktopInsectsHidden = true
+        overlay?.ignoresMouseEvents = true; overlay?.orderOut(nil); panel?.orderOut(nil)
+        if let item = statusItem { item.menu?.cancelTracking(); NSStatusBar.system.removeStatusItem(item); statusItem = nil }
+    }
     func applicationWillTerminate(_ notification: Notification) {
-        if let monitor=outsideMonitor { NSEvent.removeMonitor(monitor) }; if let monitor=localMonitor { NSEvent.removeMonitor(monitor) }
-        pointerTimer?.invalidate(); dismissFortune(cancelPending:true); adjustmentHandle.dismiss(); captureFeedback.dismiss(); onboardingGuide.dismiss(); discoveryNotice.dismiss(); desktopInsects?.close() }
+        closeUIForTermination()
+        store.forceStop()
+    }
+    @objc func quitApplication() { terminateApplication() }
     @objc func quit() {
         switch store.exitAction {
         case .hideShrine:
@@ -2857,11 +3119,17 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         }
     }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        guard store.process?.isRunning == true, store.runtimePhase != "failed" else { return .terminateNow }
-        store.send("quit", completion: { [weak self] ok in
-            if !ok { self?.openRoute("设置") }
-            NSApp.reply(toApplicationShouldTerminate: ok)
-        })
+        if terminationReady { return .terminateNow }
+        guard !terminationRequested else { return .terminateLater }
+        terminationRequested = true
+        closeUIForTermination()
+        store.shutdown { [weak self] in
+            DispatchQueue.main.async {
+                guard let self, !self.terminationReady else { return }
+                self.terminationReady = true
+                self.replyToTermination(true)
+            }
+        }
         return .terminateLater
     }
     func windowShouldClose(_ sender: NSWindow) -> Bool { dismissPanel(); return false }

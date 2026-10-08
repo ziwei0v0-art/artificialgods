@@ -867,7 +867,7 @@ def bundle_info(minimum_system, qa_save_file=None, *, embed_python=False):
     info = {
         'CFBundleName': '灶神', 'CFBundleDisplayName': '灶神', 'CFBundleExecutable': 'Tianmu',
         'CFBundleIdentifier': 'local.tianmu.garden', 'CFBundlePackageType': 'APPL',
-        'CFBundleShortVersionString': '1.0.6', 'CFBundleVersion': '26',
+        'CFBundleShortVersionString': '1.0.7', 'CFBundleVersion': '27',
         'CFBundleIconFile': 'Tianmu.icns',
         'LSUIElement': True, 'NSHighResolutionCapable': True,
         'LSMinimumSystemVersion': minimum_system,

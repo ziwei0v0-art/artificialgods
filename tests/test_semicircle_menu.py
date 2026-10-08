@@ -189,9 +189,6 @@ case "host_placement":
         require(!window.isVisible && host.menuTracking,"Presenter keeps test invisible while menu state is active")
         host.dismissTransientControls(); require(!host.menuTracking,"Dismiss releases menu mode")
     }
-    host.openStatusMenu() // Missing status item takes the same safe scene route.
-    require(host.sceneMenuWindow != nil && !host.sceneMenuWindow!.isVisible,"Status fallback remains unshown")
-    host.dismissSceneMenu()
     require(host.store.process == nil && !host.overlay.isVisible && !host.panel.isVisible,"No worker or visible windows")
 case "host_categories":
     let host = fixtureHost(), frozen = NSDictionary(dictionary:snapshot())

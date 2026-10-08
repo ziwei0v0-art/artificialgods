@@ -86,6 +86,10 @@ def bootstrap(path, now, monotonic_now):
 
 
 def main():
+    # Foundation Process already creates an independent group on macOS. Keep
+    # the same ownership boundary for CLI launches before any compiler child.
+    if os.getpgrp() != os.getpid():
+        os.setpgid(0, 0)
     parser = argparse.ArgumentParser()
     parser.add_argument('--save-file', required=True, type=Path)
     args = parser.parse_args()
