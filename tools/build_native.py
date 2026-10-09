@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import platform
 import plistlib
@@ -13,6 +14,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+MINIMUM_MACOS = '13.0'
 
 def _make_png_validator(label, *, limits=None):
     # Match the native loader's PNG/alpha/crop checks without installing an image
@@ -867,7 +869,7 @@ def bundle_info(minimum_system, qa_save_file=None, *, embed_python=False):
     info = {
         'CFBundleName': '灶神', 'CFBundleDisplayName': '灶神', 'CFBundleExecutable': 'Tianmu',
         'CFBundleIdentifier': 'local.tianmu.garden', 'CFBundlePackageType': 'APPL',
-        'CFBundleShortVersionString': '1.0.7', 'CFBundleVersion': '27',
+        'CFBundleShortVersionString': '1.0.8', 'CFBundleVersion': '29',
         'CFBundleIconFile': 'Tianmu.icns',
         'LSUIElement': True, 'NSHighResolutionCapable': True,
         'LSMinimumSystemVersion': minimum_system,
@@ -1202,7 +1204,8 @@ def build_timer_core(backend):
     result = subprocess.run([sys.executable, '-B', '-c',
                              'from tianmu_mvp.duration import ensure_native_library; '
                              'print(ensure_native_library())'],
-                            cwd=backend, check=True, capture_output=True, text=True, timeout=45)
+                            cwd=backend, env={**os.environ, 'MACOSX_DEPLOYMENT_TARGET': MINIMUM_MACOS},
+                            check=True, capture_output=True, text=True, timeout=45)
     library = Path(result.stdout.strip())
     if library.parent != backend / 'build' or not library.is_file() or library.stat().st_size == 0:
         raise ValueError('计时核心未完整打入应用，已停止构建')
@@ -1217,13 +1220,12 @@ def main():
     args = parser.parse_args()
     if sys.version_info < (3, 10):
         raise SystemExit('打包需要 Python 3.10 或更新版本；请使用 python3.12，避免生成无法启动数据服务的候选。')
-    # This package is for the current Mac. A Swift toolchain's inferred target
-    # can be newer than the installed product version, causing LaunchServices
-    # to reject an otherwise runnable binary. Pin both Mach-O and app metadata.
-    minimum_system = platform.mac_ver()[0]
+    # The player-facing minimum must not drift with the developer's macOS/SDK.
+    # Swift, the timer library and LaunchServices metadata use the same floor.
+    minimum_system = MINIMUM_MACOS
     architecture = platform.machine()
-    if not re.fullmatch(r'\d+\.\d+(?:\.\d+)?', minimum_system) or architecture not in ('arm64', 'x86_64'):
-        raise SystemExit('无法确认当前 Mac 的系统版本与架构，已停止打包')
+    if architecture not in ('arm64', 'x86_64'):
+        raise SystemExit('无法确认当前 Mac 的架构，已停止打包')
     swift_target = f'{architecture}-apple-macosx{minimum_system}'
     target = args.output.resolve()
     if target.suffix != '.app':
