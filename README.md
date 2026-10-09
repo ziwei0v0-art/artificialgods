@@ -2,15 +2,15 @@
 
 一款常驻 macOS 桌面的像素神龛养成小游戏。小道童陪着一座桌角神龛，供奉、捕虫、陈设与每日小仪式构成日常体验；独立计时工具可以陪伴工作。
 
-当前源码版本：**1.0.8 / build 29 · Mac 分发准备候选**。游戏中文名改为《灶神》，英文名为 `artificialgods`，仓库名为 `artificialgods`。本仓库保存当前代码、正式美术、第三方来源与许可、测试和必要设计说明。个人存档、临时验证档、缓存、历史安装包和原始参考资料保留在本地。
+当前源码版本：**1.0.8 / build 29 · Mac 试玩版**。游戏中文名改为《灶神》，英文名为 `artificialgods`，仓库名为 `artificialgods`。本仓库保存当前代码、正式美术、第三方来源与许可、测试和必要设计说明。个人存档、临时验证档、缓存、历史安装包和原始参考资料保留在本地。
 
 本轮将主程序与计时库的最低编译系统统一为 macOS 13.0，准备 Apple Silicon 下载包，并补齐内置运行环境与外层应用的资源签名校验。1.0.7 的原生菜单栏和完整退出修复保留。当前只有本地 ad hoc 签名，尚未完成 Developer ID 签名、公证及其他 Mac 的首次安装验收。
 
 ## 游戏下载
 
-下载入口使用本仓库的 [Releases](https://github.com/ziwei0v0-art/artificialgods/releases)。截至 2026-10-09，本地 1.0.8 候选尚未上传，仓库没有公开的游戏安装包。仓库的“Download ZIP”和自动生成的“Source code”是源码，需要构建后才能运行。
+下载 [试玩版](https://github.com/ziwei0v0-art/artificialgods/releases/tag/v1.0.8-preview.1)，请选择游戏包 `artificialgods_1.0.8_macOS_arm64.zip`。仓库的“Download ZIP”和自动生成的“Source code”是源码，需要构建后才能运行。
 
-第一批下载包面向 Apple Silicon Mac，最低编译目标为 macOS 13.0；较旧系统的实际运行仍待实机验证。Windows、Intel Mac、iPhone 和 Android 没有本轮可用包。发布准备与当前限制见 [1.0.8 检查记录](docs/verification/1.0.8.md)，拟用的下载说明见 [试玩发布说明草稿](docs/releases/1.0.8-preview.md)。
+第一批下载包面向 Apple Silicon Mac，最低编译目标为 macOS 13.0；较旧系统的实际运行仍待实机验证。Windows、Intel Mac、iPhone 和 Android 没有本轮可用包。验证情况与当前限制见 [1.0.8 检查记录](docs/verification/1.0.8.md)，打开方式见 [试玩说明](docs/releases/1.0.8-preview.md)。
 
 ![灶神原生场景预览](docs/images/zaoshen-game-preview.png)
 
