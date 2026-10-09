@@ -2,9 +2,15 @@
 
 一款常驻 macOS 桌面的像素神龛养成小游戏。小道童陪着一座桌角神龛，供奉、捕虫、陈设与每日小仪式构成日常体验；独立计时工具可以陪伴工作。
 
-当前源码版本：**1.0.7 / build 27 · 菜单栏与退出修复候选**。游戏中文名改为《灶神》，英文名为 `artificialgods`，仓库名为 `artificialgods`。本仓库保存当前代码、正式美术、第三方来源与许可、测试和必要设计说明。个人存档、临时验证档、缓存、历史安装包和原始参考资料保留在本地。
+当前源码版本：**1.0.8 / build 29 · Mac 分发准备候选**。游戏中文名改为《灶神》，英文名为 `artificialgods`，仓库名为 `artificialgods`。本仓库保存当前代码、正式美术、第三方来源与许可、测试和必要设计说明。个人存档、临时验证档、缓存、历史安装包和原始参考资料保留在本地。
 
-本轮菜单栏改用 macOS 原生菜单，其中“退出”作为独立入口，直接退出应用，不受场景菜单隐藏偏好的影响。本轮构建与针对性检查已完成，见下方验证状态。
+本轮将主程序与计时库的最低编译系统统一为 macOS 13.0，准备 Apple Silicon 下载包，并补齐内置运行环境与外层应用的资源签名校验。1.0.7 的原生菜单栏和完整退出修复保留。当前只有本地 ad hoc 签名，尚未完成 Developer ID 签名、公证及其他 Mac 的首次安装验收。
+
+## 游戏下载
+
+下载入口使用本仓库的 [Releases](https://github.com/ziwei0v0-art/artificialgods/releases)。截至 2026-10-09，本地 1.0.8 候选尚未上传，仓库没有公开的游戏安装包。仓库的“Download ZIP”和自动生成的“Source code”是源码，需要构建后才能运行。
+
+第一批下载包面向 Apple Silicon Mac，最低编译目标为 macOS 13.0；较旧系统的实际运行仍待实机验证。Windows、Intel Mac、iPhone 和 Android 没有本轮可用包。发布准备与当前限制见 [1.0.8 检查记录](docs/verification/1.0.8.md)，拟用的下载说明见 [试玩发布说明草稿](docs/releases/1.0.8-preview.md)。
 
 ![灶神原生场景预览](docs/images/zaoshen-game-preview.png)
 
@@ -34,7 +40,7 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk \
 python3.12 -B tools/build_native.py --output "$PWD/build/local/灶神.app"
 ```
 
-可搬移交付包另加 `--embed-python`。该选项目前校验指定的 Python 3.12.14、20260814 arm64 独立运行环境；普通 Python 安装不保证满足该校验。工具不会自动下载安装运行环境。详情与来源摘要见 [运行环境说明](tools/python_runtime_licenses/README.md)。
+可搬移交付包另加 `--embed-python`。该选项目前校验指定的 Python 3.12.14、20260814 arm64 独立运行环境；普通 Python 安装不保证满足该校验。工具不会自动下载安装运行环境。详情与来源摘要见 [运行环境说明](tools/python_runtime_licenses/README.md)。主程序、计时库及应用信息使用一致的 macOS 13.0 最低目标，不再继承构建机器的系统版本。签名作为单独步骤执行，见 [分发说明](docs/distribution.md)。
 
 初次试运行请显式使用新建体验档：
 
@@ -47,7 +53,9 @@ python3.12 -B tools/build_native.py --output "$PWD/build/local/灶神.app"
 
 ## 验证状态
 
-**1.0.7 当前验证：**139项菜单、后台退出、存档、计时与打包检查通过；内置Python的新候选构建成功，两次搬移后端检查通过。隔离异常退出实测最慢约1.32秒，真实桌面操作与用户验收仍待确认。详见[1.0.7 检查记录](docs/verification/1.0.7.md)。
+**1.0.8 当前验证：**最低系统目标、搬移运行、资源打包与启动边界、原生菜单退出、恢复和签名检查已执行。新包的完整资源签名校验通过，签名后两次搬移启动及计时操作通过；Gatekeeper 仍拒绝未公证的 ad hoc 包。实际桌面场景、场景菜单和设置页已打开观察，完整验收尚未结束。详见 [1.0.8 检查记录](docs/verification/1.0.8.md)。
+
+**1.0.7 历史验证：**139项菜单、后台退出、存档、计时与打包检查通过；内置Python的新候选构建成功，两次搬移后端检查通过。隔离异常退出实测最慢约1.32秒，真实桌面操作与用户验收仍待确认。详见[1.0.7 检查记录](docs/verification/1.0.7.md)。
 
 **1.0.6 历史验证：**名称、图标打包、启动边界、原生展示和无窗口通知等30项针对性检查通过。重绘神像通过真实 `TianmuView` 原生绘制层输出20%、75%、150%及浅深背景预览；冠饰与法器留在龛内。该版构建与内置运行环境的验证见[1.0.6 检查记录](docs/verification/1.0.6.md)。
 
