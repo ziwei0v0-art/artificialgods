@@ -213,8 +213,8 @@ print("PASS: native resource decoding; no application, windows, worker or saved 
             resources = Path(directory) / 'Resources'
             resources.mkdir()
             info = plistlib.loads(plistlib.dumps(BUILDER.bundle_info('15.0')))
-            self.assertEqual(info['CFBundleShortVersionString'], '1.0.7')
-            self.assertEqual(info['CFBundleVersion'], '27')
+            self.assertEqual(info['CFBundleShortVersionString'], '1.0.8')
+            self.assertEqual(info['CFBundleVersion'], '29')
             self.assertEqual(info['CFBundleIconFile'], 'Tianmu.icns')
             BUILDER.build_brand_icon(resources)
             icon = resources / info['CFBundleIconFile']

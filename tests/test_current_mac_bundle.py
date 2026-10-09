@@ -1,7 +1,7 @@
 """Compile the actual package, without launching UI or reading a save.
 
-Removing the explicit host deployment target must fail this regression on a
-compiler whose default target is newer than the current Mac.
+Removing the release deployment target must fail this regression on a
+build host newer than the oldest supported player Mac.
 """
 from pathlib import Path
 import hashlib
@@ -69,24 +69,29 @@ class CurrentMacBundleTests(unittest.TestCase):
             self.assertTrue(path.is_file())
             print('PASS packaged Catime core: real temporary worker; compiler unavailable; application bytes unchanged; NO_UI_NO_REAL_SAVE')
 
-    def test_real_bundle_deployment_floor_does_not_exceed_this_mac(self):
+    def test_real_bundle_supports_macos_13_in_both_host_and_timer_core(self):
         with tempfile.TemporaryDirectory(prefix='tianmu-current-mac-bundle-') as temporary:
             app = Path(temporary) / 'Tianmu.app'
             built = subprocess.run([sys.executable, str(ROOT / 'tools/build_native.py'),
                                     '--output', str(app)], capture_output=True, text=True, timeout=120)
             self.assertEqual(built.returncode, 0, built.stdout + built.stderr)
-            inspected = subprocess.run(['/usr/bin/otool', '-l', str(app / 'Contents/MacOS/Tianmu')],
-                                       capture_output=True, text=True, timeout=15)
-            self.assertEqual(inspected.returncode, 0, inspected.stderr)
-            minimum = re.search(r'LC_BUILD_VERSION\s+cmdsize\s+\d+\s+platform\s+\d+\s+minos\s+([\d.]+)', inspected.stdout)
-            self.assertIsNotNone(minimum, 'Actual Mach-O must declare its deployment floor')
-            actual = minimum.group(1)
-            current = platform.mac_ver()[0]
-            self.assertLessEqual(version_tuple(actual), version_tuple(current),
-                                 f'LaunchServices rejects minos {actual} on current macOS {current}')
             info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
-            self.assertEqual(version_tuple(info['LSMinimumSystemVersion']), version_tuple(actual))
-            print(f'PASS actual bundle: minos={actual}, current={current}; NO_LAUNCH_NO_SAVE_NO_WORKER')
+            binaries = [app / 'Contents/MacOS/Tianmu', *app.rglob('*.dylib')]
+            self.assertGreaterEqual(len(binaries), 2, 'Host and bundled timer core are both required')
+            for binary in binaries:
+                with self.subTest(binary=str(binary.relative_to(app))):
+                    inspected = subprocess.run(['/usr/bin/otool', '-l', str(binary)],
+                                               capture_output=True, text=True, timeout=15)
+                    self.assertEqual(inspected.returncode, 0, inspected.stderr)
+                    minimum = re.search(r'LC_BUILD_VERSION\s+cmdsize\s+\d+\s+platform\s+\d+\s+minos\s+([\d.]+)', inspected.stdout)
+                    self.assertIsNotNone(minimum, 'Actual Mach-O must declare its deployment floor')
+                    actual = minimum.group(1)
+                    self.assertLessEqual(version_tuple(actual), (13, 0, 0),
+                                         f'{binary.name} requires macOS {actual}, excluding macOS 13 players')
+                    if binary.name == 'Tianmu':
+                        self.assertEqual(version_tuple(info['LSMinimumSystemVersion']), version_tuple(actual))
+            self.assertLessEqual(version_tuple(info['LSMinimumSystemVersion']), (13, 0, 0))
+            print('PASS actual host and timer core deployment floor <= macOS 13; NO_LAUNCH_NO_SAVE_NO_WORKER')
 
 
 if __name__ == '__main__':
