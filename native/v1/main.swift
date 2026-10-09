@@ -2466,6 +2466,13 @@ final class ApplicationHost: NSObject, NSApplicationDelegate, NSWindowDelegate, 
         return desktopInsects?.observeNaturalEvent(event,context:context) ?? event
     }
     func handleLocalEvent(_ event: NSEvent) -> NSEvent? {
+        // Keep Command-Q available in our panels when the status menu is closed.
+        if event.type == .keyDown,
+           event.modifierFlags.intersection([.command, .shift, .control, .option]) == [.command],
+           event.charactersIgnoringModifiers?.lowercased() == "q" {
+            quitApplication()
+            return nil
+        }
         _ = desktopInsects?.observeNaturalEvent(event,isLocal:true)
         if event.type == .keyDown && event.keyCode == 53 {
             dismissFortune(cancelPending:true)
